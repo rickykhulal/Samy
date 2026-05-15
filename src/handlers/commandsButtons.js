@@ -1,92 +1,46 @@
-import { MessageFlags } from 'discord.js';
-import { createEmbed } from '../utils/embeds.js';
-import { logger } from '../utils/logger.js';
-import { InteractionHelper } from '../utils/interactionHelper.js';
-import { COMMANDS_PAGES, buildCommandsRow } from '../commands/Core/commands.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { createEmbed } from '../../utils/embeds.js';
+import { logger } from '../../utils/logger.js';
+import { InteractionHelper } from '../../utils/interactionHelper.js';
+import { COMMANDS_PAGES, buildCommandsRow } from '../../handlers/commandsButtons.js';
 
-// ─────────────────────────────────────────
-//  commands_prev  — go to previous page
-// ─────────────────────────────────────────
-const commandsPrevHandler = {
-    name: 'commands_prev',
-    async execute(interaction, client) {
+export default {
+    data: new SlashCommandBuilder()
+        .setName('commands')
+        .setDescription('Shows a full list of all available bot commands'),
+
+    async execute(interaction) {
+        const deferSuccess = await InteractionHelper.safeDefer(interaction);
+        if (!deferSuccess) {
+            logger.warn('Commands interaction defer failed', {
+                userId:      interaction.user.id,
+                guildId:     interaction.guildId,
+                commandName: 'commands',
+            });
+            return;
+        }
+
         try {
-            await handleCommandsPage(interaction, 'prev');
+            await InteractionHelper.safeEditReply(interaction, {
+                embeds:     [COMMANDS_PAGES[0]],
+                components: COMMANDS_PAGES.length > 1
+                    ? [buildCommandsRow(0, COMMANDS_PAGES.length)]
+                    : [],
+            });
         } catch (error) {
-            logger.error('Commands prev button error:', error);
-            await safeEphemeralError(interaction, 'Failed to navigate to the previous page.');
+            logger.error('Commands command error:', error);
+            try {
+                await InteractionHelper.safeReply(interaction, {
+                    embeds: [createEmbed({
+                        title:       'System Error',
+                        description: 'Could not load the command list at this time.',
+                        color:       'error',
+                    })],
+                    flags: MessageFlags.Ephemeral,
+                });
+            } catch (replyError) {
+                logger.error('Failed to send error reply:', replyError);
+            }
         }
     },
 };
-
-// ─────────────────────────────────────────
-//  commands_next  — go to next page
-// ─────────────────────────────────────────
-const commandsNextHandler = {
-    name: 'commands_next',
-    async execute(interaction, client) {
-        try {
-            await handleCommandsPage(interaction, 'next');
-        } catch (error) {
-            logger.error('Commands next button error:', error);
-            await safeEphemeralError(interaction, 'Failed to navigate to the next page.');
-        }
-    },
-};
-
-// ─────────────────────────────────────────
-//  Shared pagination logic
-// ─────────────────────────────────────────
-async function handleCommandsPage(interaction, direction) {
-    // Only the original invoker can flip pages
-    const originalUserId = interaction.message.interaction?.user?.id;
-    if (originalUserId && interaction.user.id !== originalUserId) {
-        return interaction.reply({
-            embeds: [createEmbed({
-                title:       '❌ Access Denied',
-                description: 'Only the person who ran `/commands` can flip pages.',
-                color:       'error',
-            })],
-            flags: MessageFlags.Ephemeral,
-        });
-    }
-
-    // Parse current page from customId  e.g. "commands_next_2"  →  2
-    const currentPage = parseInt(interaction.customId.split('_')[2], 10);
-    const totalPages  = COMMANDS_PAGES.length;
-
-    let newPage = currentPage;
-    if (direction === 'prev') newPage = Math.max(0, currentPage - 1);
-    if (direction === 'next') newPage = Math.min(totalPages - 1, currentPage + 1);
-
-    await interaction.update({
-        embeds:     [COMMANDS_PAGES[newPage]],
-        components: [buildCommandsRow(newPage, totalPages)],
-    });
-}
-
-// ─────────────────────────────────────────
-//  Helper — safe ephemeral error reply
-// ─────────────────────────────────────────
-async function safeEphemeralError(interaction, message) {
-    try {
-        const payload = {
-            embeds: [createEmbed({
-                title:       'Error',
-                description: message,
-                color:       'error',
-            })],
-            flags: MessageFlags.Ephemeral,
-        };
-        if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply(payload);
-        } else if (interaction.deferred) {
-            await interaction.editReply(payload);
-        }
-    } catch (e) {
-        logger.error('Failed to send commands button error reply:', e);
-    }
-}
-
-export default commandsPrevHandler;
-export { commandsNextHandler };
