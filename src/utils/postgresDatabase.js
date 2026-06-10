@@ -812,9 +812,14 @@ class PostgreSQLDatabase {
             if (parts[2] === 'afk' && parts[3]) {
                 return { type: 'afk_status', guildId: parts[1], userId: parts[3], fullKey: key };
             }
-            if (parts[2] === 'ticket' && parts[3]) {
-                return { type: 'ticket', guildId: parts[1], channelId: parts[3], fullKey: key };
-            }
+            if (parts[2] === 'ticket') {
+    if (parts[3] === 'counter') {
+        return { type: 'temp', fullKey: key };
+    }
+    if (parts[3]) {
+        return { type: 'ticket', guildId: parts[1], channelId: parts[3], fullKey: key };
+    }
+}
         }
 
         
