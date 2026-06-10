@@ -243,12 +243,14 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
       userMessage: 'Failed to create ticket. Please try again in a moment.',
       context: { guildId: guild?.id, userId: member?.id }
     });
-    logger.error('Error creating ticket:', {
-      guildId: guild?.id,
-      userId: member?.id,
-      error: typedError.message,
-      errorCode: typedError.context?.errorCode
-    });
+    logger.error('Error creating ticket: ' + (error?.message || String(error)), {
+    guildId: guild?.id,
+    userId: member?.id,
+    error: typedError.message,
+    errorCode: typedError.context?.errorCode,
+    originalError: error?.message,
+    stack: error?.stack,
+});
     return { 
       success: false, 
       error: typedError.userMessage || typedError.message,
