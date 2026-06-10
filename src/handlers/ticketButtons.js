@@ -179,28 +179,26 @@ const createTicketModalHandler = {
       );
       
       if (result.success) {
-        await interaction.editReply({
-          embeds: [successEmbed(
+    await interaction.editReply({
+        embeds: [successEmbed(
             'Ticket Created',
             `Your ticket has been created in ${result.channel}!`
-          )]
-        });
-      } else {
-        await interaction.editReply({
-          embeds: [errorEmbed('Error', result.error || 'Failed to create ticket.')],
-          flags: MessageFlags.Ephemeral
-        });
-      }
-    } catch (error) {
-      logger.error('Error creating ticket:', error);
-      await interaction.editReply({
+        )]
+    });
+} else {
+    logger.error('Ticket creation failed: ' + result.error, { errorCode: result.errorCode });
+    await interaction.editReply({
+        embeds: [errorEmbed('Error', result.error || 'Failed to create ticket.')],
+        flags: MessageFlags.Ephemeral
+    });
+}
+} catch (error) {
+    logger.error('Error creating ticket: ' + error?.message, { stack: error?.stack });
+    await interaction.editReply({
         embeds: [errorEmbed('Error', 'An error occurred while creating your ticket.')],
         flags: MessageFlags.Ephemeral
-      });
-    }
-  }
-};
-
+    });
+}
 const closeTicketHandler = {
   name: 'ticket_close',
   async execute(interaction, client) {
