@@ -139,7 +139,7 @@ export async function loadCommands(client) {
 
 
 
-export async function registerCommands(client, guildId) {
+export async function registerCommands(client) {
     try {
         const commands = [];
         let totalSubcommands = 0;
@@ -171,92 +171,9 @@ const registeredNames = new Set();
         }
         
         const totalCommandsWithSubs = commands.length + totalSubcommands;
-        
-        if (guildId) {
-            
-            logger.info(`Preparing to register ${totalCommandsWithSubs} commands for guild ${guildId}`);
-            
-            logger.info('Validating commands before registration...');
-            
-            let validationErrors = [];
-            commands.forEach((cmd, index) => {
-                if (cmd.name && cmd.name.length > 32) {
-                    validationErrors.push(`Command ${cmd.name} has name longer than 32 chars: "${cmd.name}" (${cmd.name.length} chars)`);
-                }
-                if (cmd.description && cmd.description.length > 110) {
-                    validationErrors.push(`Command ${cmd.name} has description longer than 110 chars: "${cmd.description}" (${cmd.description.length} chars)`);
-                }
-                
-                if (cmd.options) {
-                    cmd.options.forEach((option, optIndex) => {
-                        if (option.name && option.name.length > 32) {
-                            validationErrors.push(`Command ${cmd.name} option ${option.name} has name longer than 32 chars: "${option.name}" (${option.name.length} chars)`);
-                        }
-                        if (option.description && option.description.length > 110) {
-                            validationErrors.push(`Command ${cmd.name} option ${option.name} has description longer than 110 chars: "${option.description}" (${option.description.length} chars)`);
-                        }
-                        
-                        if (option.choices) {
-                            option.choices.forEach((choice, choiceIndex) => {
-                                if (choice.name && choice.name.length > 110) {
-                                    validationErrors.push(`Command ${cmd.name} option ${option.name} choice ${choice.name} has name longer than 110 chars: "${choice.name}" (${choice.name.length} chars)`);
-                                }
-                                if (choice.value && choice.value.length > 100) {
-                                    validationErrors.push(`Command ${cmd.name} option ${option.name} choice ${choice.name} has value longer than 100 chars: "${choice.value}" (${choice.value.length} chars)`);
-                                }
-                            });
-                        }
-                        
-                        if (option.options) {
-                            option.options.forEach((subOption, subOptIndex) => {
-                                if (subOption.name && subOption.name.length > 32) {
-                                    validationErrors.push(`Command ${cmd.name} subcommand ${option.name} option ${subOption.name} has name longer than 32 chars: "${subOption.name}" (${subOption.name.length} chars)`);
-                                }
-                                if (subOption.description && subOption.description.length > 110) {
-                                    validationErrors.push(`Command ${cmd.name} subcommand ${option.name} option ${subOption.name} has description longer than 110 chars: "${subOption.description}" (${subOption.description.length} chars)`);
-                                }
-                                
-                                if (subOption.choices) {
-                                    subOption.choices.forEach((choice, choiceIndex) => {
-                                        if (choice.name && choice.name.length > 110) {
-                                            validationErrors.push(`Command ${cmd.name} subcommand ${option.name} option ${subOption.name} choice ${choice.name} has name longer than 110 chars: "${choice.name}" (${choice.name.length} chars)`);
-                                        }
-                                        if (choice.value && choice.value.length > 100) {
-                                            validationErrors.push(`Command ${cmd.name} subcommand ${option.name} option ${subOption.name} choice ${choice.name} has value longer than 100 chars: "${choice.value}" (${choice.value.length} chars)`);
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-            
-            if (validationErrors.length > 0) {
-                logger.error('Command validation failed. Errors:');
-                validationErrors.forEach(error => logger.error(`  - ${error}`));
-                throw new Error(`Command validation failed with ${validationErrors.length} errors`);
-            }
-            
-                  logger.info('Command validation passed');
-
-            const guildIds = guildId.split(',');
-
-            for (const id of guildIds) {
-                try {
-                    const guild = await client.guilds.fetch(id.trim());
-                    const existingCommands = await guild.commands.fetch();
-                    logger.info(`Found ${existingCommands.size} existing guild commands in ${guild.name}`);
-                    await guild.commands.set(commands);
-                    logger.info(`Successfully registered ${commands.length} commands in ${guild.name}`);
-                } catch (error) {
-                    logger.error(`Failed to register commands in guild ${id}:`, error);
-                }
-            }
-
-        } else {
-            logger.info('Skipping global command registration - bot is guild-only');
-        }
+        logger.info(`Registering ${commands.length} global commands...`);
+        await client.application.commands.set(commands);
+        logger.info(`Successfully registered ${commands.length} global commands`);
     } catch (error) {
         logger.error('Error registering commands:', error);
         throw error;
