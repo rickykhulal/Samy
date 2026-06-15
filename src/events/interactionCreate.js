@@ -251,12 +251,16 @@ export default {
           }
 
           const [customId, ...args] = interaction.customId.split(':');
-          const button = client.buttons.get(customId);
+let button = client.buttons.get(customId);
 
-          if (!button) {
-            if (!interaction.customId.includes(':')) {
-              return;
-            }
+if (!button) {
+  button = client.buttons.find((b, name) => interaction.customId.startsWith(name + '_'));
+}
+
+if (!button) {
+  if (!interaction.customId.includes(':')) {
+    return;
+  }
 
             throw createError(
               `No button handler found for ${customId}`,
