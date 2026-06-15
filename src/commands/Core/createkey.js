@@ -5,7 +5,7 @@ import { InteractionHelper } from '../../utils/interactionHelper.js';
 
 // ── Config ─────────────────────────────────────────────
 const APPROVER_USER_ID = '1190844956395446397';
-const DEFAULT_CREDITS   = 99;
+export const DEFAULT_CREDITS = 99;
 const MAX_DAYS          = 30;
 
 // ── Credit helpers (stored in bot DB) ─────────────────
