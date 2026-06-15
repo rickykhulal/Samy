@@ -239,6 +239,24 @@ const registeredNames = new Set();
             }
             
             logger.info('Command validation passed');
+
+
+            const guildIds = guildId.split(',');
+
+for (const id of guildIds) {
+    try {
+        const guild = await client.guilds.fetch(id.trim());
+
+        const existingCommands = await guild.commands.fetch();
+        logger.info(`Found ${existingCommands.size} existing guild commands in ${guild.name}`);
+
+        await guild.commands.set(commandsToRegister);
+
+        logger.info(`Successfully registered ${commandsToRegister.length} commands in ${guild.name}`);
+    } catch (error) {
+        logger.error(`Failed to register commands in guild ${id}:`, error);
+    }
+}
             
             const guildIds = guildId.split(',');
 
