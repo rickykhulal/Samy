@@ -171,9 +171,21 @@ const registeredNames = new Set();
         }
         
         const totalCommandsWithSubs = commands.length + totalSubcommands;
-        logger.info(`Registering ${commands.length} global commands...`);
-        await client.application.commands.set(commands);
-        logger.info(`Successfully registered ${commands.length} global commands`);
+        logger.info('Command validation passed');
+
+        const guildIds = guildId.split(',');
+
+        for (const id of guildIds) {
+            try {
+                const guild = await client.guilds.fetch(id.trim());
+                const existingCommands = await guild.commands.fetch();
+                logger.info(`Found ${existingCommands.size} existing guild commands in ${guild.name}`);
+                await guild.commands.set(commands);
+                logger.info(`Successfully registered ${commands.length} commands in ${guild.name}`);
+            } catch (error) {
+                logger.error(`Failed to register commands in guild ${id}:`, error);
+            }
+        }
     } catch (error) {
         logger.error('Error registering commands:', error);
         throw error;
