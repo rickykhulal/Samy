@@ -240,28 +240,18 @@ const registeredNames = new Set();
             
             logger.info('Command validation passed');
             
-            const guild = await client.guilds.fetch(guildId);
-            
-            const existingCommands = await guild.commands.fetch();
-            logger.info(`Found ${existingCommands.size} existing guild commands`);
-            
-            const MAX_COMMANDS = 100;
-            let commandsToRegister = commands;
-            
-            if (commands.length > MAX_COMMANDS) {
-                logger.warn(`Command count (${commands.length}) exceeds Discord limit (${MAX_COMMANDS}), truncating...`);
-                commandsToRegister = commands.slice(0, MAX_COMMANDS);
-                logger.info(`Truncated to ${commandsToRegister.length} commands for registration`);
-            }
-            
-            if (process.env.NODE_ENV !== 'production') {
-                logger.info(`Registering ${totalCommandsWithSubs} commands for guild ${guild.name} (${guild.id})`);
-            }
-            
-            try {
-                logger.info(`Registering ${commandsToRegister.length} new commands...`);
-                
-                await guild.commands.set(commandsToRegister);
+            const guildIds = guildId.split(',');
+
+for (const id of guildIds) {
+    const guild = await client.guilds.fetch(id.trim());
+
+    const existingCommands = await guild.commands.fetch();
+    logger.info(`Found ${existingCommands.size} existing guild commands in ${guild.name}`);
+
+    await guild.commands.set(commandsToRegister);
+
+    logger.info(`Successfully registered ${commandsToRegister.length} commands in ${guild.name}`);
+}
                 
                 logger.info(`Successfully registered ${commandsToRegister.length} guild commands`);
                 
