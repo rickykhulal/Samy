@@ -238,47 +238,22 @@ const registeredNames = new Set();
                 throw new Error(`Command validation failed with ${validationErrors.length} errors`);
             }
             
-                        logger.info('Command validation passed');
+                  logger.info('Command validation passed');
 
             const guildIds = guildId.split(',');
 
             for (const id of guildIds) {
                 try {
                     const guild = await client.guilds.fetch(id.trim());
-
                     const existingCommands = await guild.commands.fetch();
                     logger.info(`Found ${existingCommands.size} existing guild commands in ${guild.name}`);
-
-                    await guild.commands.set(commandsToRegister);
-
-                    logger.info(`Successfully registered ${commandsToRegister.length} commands in ${guild.name}`);
+                    await guild.commands.set(commands);
+                    logger.info(`Successfully registered ${commands.length} commands in ${guild.name}`);
                 } catch (error) {
                     logger.error(`Failed to register commands in guild ${id}:`, error);
                 }
             }
 
-        } else {
-            logger.info('Skipping global command registration - bot is guild-only');
-        }
-                } else {
-                    logger.info(`Verification passed: ${registeredCommands.size} commands successfully registered`);
-                }
-                
-            } catch (error) {
-                logger.error('Failed to register commands:', error);
-                
-                if (existingCommands.size > 0) {
-                    logger.info('Attempting to restore previous commands due to registration failure...');
-                    try {
-                        await guild.commands.set(existingCommands.map(cmd => cmd));
-                        logger.info('Successfully restored previous commands');
-                    } catch (restoreError) {
-                        logger.error('Failed to restore previous commands:', restoreError);
-                    }
-                }
-                
-                throw error;
-            }
         } else {
             logger.info('Skipping global command registration - bot is guild-only');
         }
