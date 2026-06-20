@@ -301,6 +301,11 @@ export async function consumeKey(client, productId, keyId, userId, requestId) {
     return true;
 }
 
+export async function getUsedKeys(client, productId) {
+    const val = await client.db.get(DB.usedKeys(productId));
+    return Array.isArray(val) ? val : [];
+}
+
 // ─────────────────────────────────────────────────────────────
 //  CUSTOM REQUEST HELPERS
 // ─────────────────────────────────────────────────────────────
