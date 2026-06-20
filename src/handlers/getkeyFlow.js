@@ -202,12 +202,9 @@ const getkeyDaysHandler = {
 // ─────────────────────────────────────────────────────────────
 const getkeyConfirmHandler = {
     name: 'getkey_confirm',
-    async execute(interaction, client) {
+    async execute(interaction, client, args) {
         try {
-            const parts     = interaction.customId.replace('getkey_confirm_', '').split('_');
-            const keyId     = parts[0];
-            const productId = parts.slice(1).join('_');
-
+            const [keyId, productId] = args;
             await interaction.deferUpdate();
 
             const credits = await getCredits(client, interaction.user.id);
@@ -275,7 +272,7 @@ async function searchAndDeliver(interaction, client, productId, days, isUpdate =
     // Nearest match — show options
     const nearestButtons = result.nearest.map(k =>
         new ButtonBuilder()
-            .setCustomId(`getkey_confirm_${k.id}_${productId}`)
+            .setCustomId(`getkey_confirm:${k.id}:${productId}`)
             .setLabel(`✅ ${k.durationDays} Days`)
             .setStyle(ButtonStyle.Primary)
     );
