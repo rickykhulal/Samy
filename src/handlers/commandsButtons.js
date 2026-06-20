@@ -3,7 +3,6 @@ import { createEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { COMMANDS_PAGES, buildCommandsRow } from '../../handlers/commandsButtons.js';
-import { createEmbed } from '../../utils/embeds.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('commands')
