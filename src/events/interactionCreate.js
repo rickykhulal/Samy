@@ -343,8 +343,10 @@ if (!button) {
           }
 
           const [customId, ...args] = interaction.customId.split(':');
-          const modal = client.modals.get(customId);
-
+let modal = client.modals.get(customId);
+if (!modal) {
+  modal = client.modals.find((m, name) => interaction.customId.startsWith(name + '_'));
+}
           if (!modal) {
             if (!interaction.customId.includes(':')) {
               // No registered handler and no ':' delimiter — this is an inline-awaited
