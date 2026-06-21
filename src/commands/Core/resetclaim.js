@@ -3,6 +3,7 @@ import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { ADMIN_IDS } from '../../utils/loms.js';
 import { errorEmbed, successEmbed } from '../../utils/embeds.js';
 
+
 export default {
     data: new SlashCommandBuilder()
         .setName('resetclaim')
