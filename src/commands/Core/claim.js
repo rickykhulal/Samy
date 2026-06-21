@@ -14,7 +14,7 @@ import {
 } from '../../utils/loms.js';
 
 const MEMBER_ROLE_ID = '1504644347256242252';
-const CLAIM_DURATION_DAYS = 1;
+const CLAIM_DURATION_DAYS = 3;
 
 function claimKey(userId) {
     return `loms:member_claim:${userId}`;
