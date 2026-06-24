@@ -14,7 +14,7 @@ import {
 } from '../../utils/loms.js';
 
 const MEMBER_ROLE_ID = '1504644347256242252';
-const CLAIM_DURATION_DAYS = 3;
+const CLAIM_DURATION_DAYS = 1;
 
 function claimKey(userId) {
     return `loms:member_claim:${userId}`;
@@ -42,7 +42,7 @@ export default {
                 });
             }
 
-            const products = await getActiveProducts(client);
+            const products = (await getActiveProducts(client)).filter(p => p.id === 'uid_bypass');
             if (!products || products.length === 0) {
                 return interaction.editReply({
                     embeds: [errorEmbed('❌ Unavailable', 'No products are configured right now. Try again later.')],
