@@ -73,26 +73,30 @@ export default {
 
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-            // Fetch all keys that match the claim pattern
-            const keys = await client.db.keys('loms:member_claim:*').catch(() => []);
+            try {
+                // Fetch all guild members
+                const members = await interaction.guild.members.fetch();
 
-            if (!keys || keys.length === 0) {
+                // Reset every member's claim key
+                await Promise.all(
+                    members.map(member =>
+                        client.db.set(`loms:member_claim:${member.id}`, false).catch(() => {})
+                    )
+                );
+
                 return interaction.editReply({
-                    embeds: [successEmbed('ℹ️ Nothing to Reset', 'No claim records were found in the database.')],
+                    embeds: [successEmbed(
+                        '✅ All Claims Reset',
+                        `Successfully reset **${members.size}** member claim(s). Everyone can use \`/claim\` again.`
+                    )],
+                });
+
+            } catch (err) {
+                console.error('[resetclaim] Reset all failed:', err);
+                return interaction.editReply({
+                    embeds: [errorEmbed('❌ Error', 'Failed to fetch guild members. Please try again.')],
                 });
             }
-
-            // Reset every key
-            await Promise.all(
-                keys.map(key => client.db.set(key, false).catch(() => {}))
-            );
-
-            return interaction.editReply({
-                embeds: [successEmbed(
-                    '✅ All Claims Reset',
-                    `Successfully reset **${keys.length}** member claim(s). Everyone can use \`/claim\` again.`
-                )],
-            });
         }
     },
 };
