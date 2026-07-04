@@ -30,14 +30,14 @@ const PRODUCT_CHOICES = [
     { id: 'external_exclusive', label: 'External Panel', emoji: '🖥️' },
 ];
 
-function claimKey(userId) {
-    return `loms:member_claim:${userId}`;
+function claimKey(userId, productId) {
+    return `loms:member_claim:${userId}:${productId}`;
 }
 
 export default {
     data: new SlashCommandBuilder()
         .setName('claim')
-        .setDescription('Claim your free 1-day license (choose one product) — one time only'),
+        .setDescription('Claim a free 1-day license — one claim per product'),
 
     async execute(interaction, guildConfig, client) {
         try {
@@ -49,13 +49,6 @@ export default {
                 });
             }
 
-            const alreadyClaimed = await client.db.get(claimKey(interaction.user.id)).catch(() => null);
-            if (alreadyClaimed) {
-                return interaction.editReply({
-                    embeds: [errorEmbed('❌ Already Claimed', 'You have already used your free claim. Contact an admin if you need a reset.')],
-                });
-            }
-
             const allProducts = await getActiveProducts(client);
             if (!allProducts || allProducts.length === 0) {
                 return interaction.editReply({
@@ -64,13 +57,25 @@ export default {
             }
 
             // Filter down to only the two choosable products that are actually active.
-            const choosable = PRODUCT_CHOICES
+            const allChoosable = PRODUCT_CHOICES
                 .map(choice => ({ choice, product: allProducts.find(p => p.id === choice.id) }))
                 .filter(entry => entry.product);
 
-            if (choosable.length === 0) {
+            if (allChoosable.length === 0) {
                 return interaction.editReply({
                     embeds: [errorEmbed('❌ Unavailable', 'No claimable products are configured right now. Try again later.')],
+                });
+            }
+
+            // Only offer products this user hasn't already claimed.
+            const claimedFlags = await Promise.all(
+                allChoosable.map(entry => client.db.get(claimKey(interaction.user.id, entry.product.id)).catch(() => null))
+            );
+            const choosable = allChoosable.filter((_, i) => !claimedFlags[i]);
+
+            if (choosable.length === 0) {
+                return interaction.editReply({
+                    embeds: [errorEmbed('❌ Already Claimed', 'You have already claimed all available products. Contact an admin if you need a reset.')],
                 });
             }
 
@@ -87,7 +92,7 @@ export default {
             const chooseEmbed = new EmbedBuilder()
                 .setColor(0x3498DB)
                 .setTitle('🎁 Choose Your Free Claim')
-                .setDescription('Pick **one** of the following. This is a one-time claim, so choose wisely.');
+                .setDescription('Pick one of the following. You can claim each product once.');
 
             const promptMessage = await interaction.editReply({
                 embeds: [chooseEmbed],
@@ -114,6 +119,15 @@ export default {
 
             await choiceInteraction.deferUpdate();
 
+            // Re-check in case it was claimed in the moments between showing buttons and clicking (race condition)
+            const stillUnclaimed = !(await client.db.get(claimKey(interaction.user.id, product.id)).catch(() => null));
+            if (!stillUnclaimed) {
+                return interaction.editReply({
+                    embeds: [errorEmbed('❌ Already Claimed', `You've already claimed **${product.name}**. Try another product by running \`/claim\` again.`)],
+                    components: [],
+                });
+            }
+
             // Verify stock for the chosen product before consuming anything
             const pool = await getPool(client, product.id);
             if (!pool || pool.length === 0) {
@@ -136,7 +150,7 @@ export default {
             // Consume the key and lock the claim
             const reqId = generateRequestId();
             await consumeKey(client, product.id, key.id, interaction.user.id, reqId);
-            await client.db.set(claimKey(interaction.user.id), true);
+            await client.db.set(claimKey(interaction.user.id, product.id), true);
 
             const keyEmbed = new EmbedBuilder()
                 .setColor(0x2ECC71)
