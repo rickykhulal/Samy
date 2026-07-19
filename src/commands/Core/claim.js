@@ -34,6 +34,9 @@ function claimKey(userId, productId) {
     return `loms:member_claim:${userId}:${productId}`;
 }
 
+// Tracks which users have ever claimed something, so admins can reset everyone at once.
+export const CLAIM_USERLIST_KEY = 'loms:claim_userlist';
+
 export default {
     data: new SlashCommandBuilder()
         .setName('claim')
@@ -151,6 +154,13 @@ export default {
             const reqId = generateRequestId();
             await consumeKey(client, product.id, key.id, interaction.user.id, reqId);
             await client.db.set(claimKey(interaction.user.id, product.id), true);
+
+            // Track this user so admins can bulk-reset all claimants later
+            const claimantList = (await client.db.get(CLAIM_USERLIST_KEY).catch(() => null)) || [];
+            if (!claimantList.includes(interaction.user.id)) {
+                claimantList.push(interaction.user.id);
+                await client.db.set(CLAIM_USERLIST_KEY, claimantList).catch(() => {});
+            }
 
             const keyEmbed = new EmbedBuilder()
                 .setColor(0x2ECC71)
