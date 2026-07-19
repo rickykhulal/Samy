@@ -22,12 +22,10 @@ import {
 } from '../../utils/loms.js';
 
 const MEMBER_ROLE_ID = '1504644347256242252';
-const CLAIM_DURATION_DAYS = 1;
-
-// The two claimable products. Adjust these IDs if your product catalog uses different ones.
+// Per-product claim durations (in days). Adjust each independently.
 const PRODUCT_CHOICES = [
-    { id: 'uid_bypass', label: 'UID Bypass', emoji: '🛡️' },
-    { id: 'external_exclusive', label: 'External Panel', emoji: '🖥️' },
+    { id: 'uid_bypass', label: 'UID Bypass', emoji: '🛡️', durationDays: 3 },
+    { id: 'external_exclusive', label: 'External Panel', emoji: '🖥️', durationDays: 1 },
 ];
 
 function claimKey(userId, productId) {
@@ -119,6 +117,7 @@ export default {
             const chosenId = choiceInteraction.customId.replace('claimchoice_', '');
             const chosenEntry = choosable.find(entry => entry.choice.id === chosenId);
             const product = chosenEntry.product;
+            const durationDays = chosenEntry.choice.durationDays;
 
             await choiceInteraction.deferUpdate();
 
@@ -140,7 +139,7 @@ export default {
                 });
             }
 
-            const result = await findBestKey(client, product.id, CLAIM_DURATION_DAYS);
+            const result = await findBestKey(client, product.id, durationDays);
             if (!result) {
                 return interaction.editReply({
                     embeds: [errorEmbed('❌ Out of Stock', `**${product.name}** has no keys available right now. Try again later — your claim was not used.`)],
