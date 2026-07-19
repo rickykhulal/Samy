@@ -18,6 +18,7 @@ const configuredTables = {
     temp_data: 'temp_data',
     cache_data: 'cache_data',
 };
+
 const allowedTableIdentifiers = new Set([
     'guilds',
     'users',
