@@ -1,6 +1,5 @@
 import { assertAllowlistedIdentifier } from '../utils/sqlIdentifiers.js';
 import { EXPECTED_SCHEMA_LABEL, EXPECTED_SCHEMA_VERSION } from './schemaVersion.js';
-
 const configuredTables = {
     guilds: 'guilds',
     users: 'users',
@@ -19,7 +18,6 @@ const configuredTables = {
     temp_data: 'temp_data',
     cache_data: 'cache_data',
 };
-
 const allowedTableIdentifiers = new Set([
     'guilds',
     'users',
@@ -38,7 +36,6 @@ const allowedTableIdentifiers = new Set([
     'temp_data',
     'cache_data',
 ]);
-
 const validatedTables = Object.fromEntries(
     Object.entries(configuredTables).map(([key, value]) => [
         key,
@@ -46,7 +43,9 @@ const validatedTables = Object.fromEntries(
     ])
 );
 
-
+// Render (and most managed Postgres hosts) require SSL. Set POSTGRES_SSL=false
+// only for local development against a non-SSL local Postgres instance.
+const sslOption = process.env.POSTGRES_SSL === 'false' ? false : { rejectUnauthorized: false };
 
 export const pgConfig = {
     url: process.env.POSTGRES_URL || 'postgresql://localhost:5432/titanbot',
@@ -58,7 +57,7 @@ export const pgConfig = {
         database: process.env.POSTGRES_DB || 'titanbot',
         user: process.env.POSTGRES_USER || 'postgres',
         password: (process.env.POSTGRES_PASSWORD || '').toString(),
-        ssl: false,
+        ssl: sslOption,
         
         
         max: parseInt(process.env.POSTGRES_MAX_CONNECTIONS) || 20,
@@ -106,7 +105,7 @@ export const pgConfig = {
     
     features: {
         pooling: true,
-        ssl: false,
+        ssl: sslOption !== false,
         
         metrics: true,
         
@@ -135,13 +134,8 @@ export const pgConfig = {
         directory: 'database/migrations',
         
         rollbackOnFailure: false,
-
         expectedVersion: EXPECTED_SCHEMA_VERSION,
-
         expectedLabel: EXPECTED_SCHEMA_LABEL,
     }
 };
-
 export default pgConfig;
-
-
