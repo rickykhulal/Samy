@@ -82,8 +82,32 @@ class TitanBot extends Client {
       startupLog('Handlers loaded');
       
       startupLog('Logging into Discord...');
-      await this.login(this.config.bot.token);
-      startupLog('Discord login successful');
+
+if (!this.config.bot.token) {
+  throw new Error('Discord bot token is missing from configuration.');
+}
+
+startupLog('Discord token is present. Attempting Discord connection...');
+
+try {
+  await Promise.race([
+    this.login(this.config.bot.token),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Discord login timed out after 30 seconds')),
+        30000
+      )
+    )
+  ]);
+
+  startupLog('Discord login successful');
+  startupLog(`Logged in as ${this.user?.tag || 'unknown user'}`);
+} catch (error) {
+  logger.error('Discord login failed:', error);
+  logger.error(`Error name: ${error?.name || 'unknown'}`);
+  logger.error(`Error message: ${error?.message || 'unknown'}`);
+  throw error;
+}
       
       startupLog('Registering slash commands...');
       await this.registerCommands();
